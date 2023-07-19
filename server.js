@@ -1,8 +1,10 @@
 const express = require("express");
 const app = express();
+const cors = require('cors');
 require("dotenv").config();
 const dbConfig = require("./config/dbConfig");
 const moment = require("moment");
+app.use(cors({"origin":"*"}));
 app.use(express.json());
 
 const userRoute = require("./routes/userRoute");
