@@ -8,7 +8,15 @@ const doctorAppointmentSchema = new mongoose.Schema({
     doctorId: {
         type: String,
         required: true,
-      }, 
+      },
+      doctorInfo: {
+        type: Object,
+        required: true,
+      },
+      userInfo: {
+        type: Object,
+        required: true,
+      },
     date: {
         type: Date,
         required: true,

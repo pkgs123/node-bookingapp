@@ -7,6 +7,8 @@ const jwt = require("jsonwebtoken");
 const authMiddleware = require("../middlewares/authMiddleware");
 const Appointment = require("../models/appointmentModel");
 const AppointmentDetails = require("../models/doctorAppointmentModel");
+
+
 const Location = require("../models/locationModel");
 const moment = require("moment");
 
@@ -180,12 +182,14 @@ router.post("/check-booking-avilability", authMiddleware, async (req, res) => {
 
 router.get("/get-appointments-by-user-id", authMiddleware, async (req, res) => {
   try {
-    const appointments = await Appointment.find({ userId: req.body.userId });
-    res.status(200).send({
+    const appointments = await AppointmentDetails.find({ userId: req.body.userId });
+  
+     res.status(200).send({
       message: "Appointments fetched successfully",
       success: true,
-      data: appointments,
-    });
+      data: appointments
+     })
+  
   } catch (error) {
     console.log(error);
     res.status(500).send({
