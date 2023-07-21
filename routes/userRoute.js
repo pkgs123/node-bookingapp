@@ -8,6 +8,7 @@ const authMiddleware = require("../middlewares/authMiddleware");
 const Appointment = require("../models/appointmentModel");
 const AppointmentDetails = require("../models/doctorAppointmentModel");
 
+const emailNotificationPage = require("../notification/notification");
 
 const Location = require("../models/locationModel");
 const moment = require("moment");
@@ -87,23 +88,23 @@ router.post("/get-user-info-by-id", authMiddleware, async (req, res) => {
   }
 });
 
-router.get("/get-location",authMiddleware, async (req, res) =>{
-  try{
-    const user = await User.findOne({_id:req.body.userId});
+router.get("/get-location", authMiddleware, async (req, res) => {
+  try {
+    const user = await User.findOne({ _id: req.body.userId });
     user.password = undefined;
-    if(!user){
-      return res.status(200).send({message: "Location not available",success:true})
-    }
-    else{
-      const locations = await Location.find({})
+    if (!user) {
+      return res
+        .status(200)
+        .send({ message: "Location not available", success: true });
+    } else {
+      const locations = await Location.find({});
       res.status(200).send({
         message: "Location fetched successfully",
         success: true,
         data: locations,
       });
     }
-  }
-  catch (error) {
+  } catch (error) {
     console.log(error);
     res.status(500).send({
       message: "Error finding locations",
@@ -111,16 +112,18 @@ router.get("/get-location",authMiddleware, async (req, res) =>{
       error,
     });
   }
-})
+});
 
 router.post("/book-appointment", authMiddleware, async (req, res) => {
   try {
     req.body.status = "pending";
-   const formatedDate =  moment(req.body.date, 'DD-MM-YYYY').format('YYYY-MM-DD');
-   console.log("fomattedDate",formatedDate);
+    const formatedDate = moment(req.body.date, "DD-MM-YYYY").format(
+      "YYYY-MM-DD"
+    );
+    console.log("fomattedDate", formatedDate);
     req.body.date = formatedDate;
     req.body.time = req.body.time;
-    console.log("body-date",typeof req.body.date);
+    console.log("body-date", typeof req.body.date);
     // moment(req.body.time, "HH:mm").toISOString();
     const newAppointment = new AppointmentDetails(req.body);
     await newAppointment.save();
@@ -132,9 +135,39 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
     //   onClickPath: "/doctor/appointments",
     // });
     // await user.save();
+    const userName = req.body.userInfo?.name;
+    const doctor = req.body?.doctorInfo;
+    const doctorName = `${doctor?.firstName} ${doctor?.lastName}`;
+    const date = req.body?.date;
+    const time = req.body?.time;
+
+    const formattedTime = (time / 2).toString().includes(".5")
+      ? moment((time / 2).toString().replace(".5", ":30"), ["HH:mm"]).format(
+          "LT"
+        )
+      : moment((time / 2).toString(), "hh").format("LT");
+
+    const recipientsAddress = [
+      req.body?.userInfo?.email,
+      req.body.doctorInfo?.email,
+    ];
+    const recipientDisplayName = [doctorName,userName]
+    const customMsg = `Hi ${userName}, Your appointment has been confirmed with ${doctorName} on ${date} at ${formattedTime}.`;
+    const emailResponse = await emailNotificationPage.sendEmail(
+      recipientsAddress,
+      recipientDisplayName,
+      customMsg
+    );
+    console.log("emailResponse", emailResponse);
+      
     res.status(200).send({
       message: "Appointment booked successfully",
       success: true,
+      emailSentStatus: emailResponse?.status === "Succeeded" ? true : false,
+      emailMsg:
+        emailResponse?.status === "Succeeded"
+          ? customMsg
+          : "Sorry!! Unable to send an email.",
     });
   } catch (error) {
     console.log(error);
@@ -148,8 +181,10 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
 
 router.post("/check-booking-avilability", authMiddleware, async (req, res) => {
   try {
-    const formatedDate =  moment(req.body.date, 'DD-MM-YYYY').format('YYYY-MM-DD');
-   console.log("fomattedDate",formatedDate);
+    const formatedDate = moment(req.body.date, "DD-MM-YYYY").format(
+      "YYYY-MM-DD"
+    );
+    console.log("fomattedDate", formatedDate);
     req.body.date = formatedDate;
     const date = formatedDate;
     const fromTime = req.body.time;
@@ -157,7 +192,7 @@ router.post("/check-booking-avilability", authMiddleware, async (req, res) => {
     const appointments = await AppointmentDetails.find({
       doctorId,
       date,
-      time: fromTime
+      time: fromTime,
     });
     if (appointments.length > 0) {
       return res.status(200).send({
@@ -182,14 +217,15 @@ router.post("/check-booking-avilability", authMiddleware, async (req, res) => {
 
 router.get("/get-appointments-by-user-id", authMiddleware, async (req, res) => {
   try {
-    const appointments = await AppointmentDetails.find({ userId: req.body.userId });
-  
-     res.status(200).send({
+    const appointments = await AppointmentDetails.find({
+      userId: req.body.userId,
+    });
+
+    res.status(200).send({
       message: "Appointments fetched successfully",
       success: true,
-      data: appointments
-     })
-  
+      data: appointments,
+    });
   } catch (error) {
     console.log(error);
     res.status(500).send({
@@ -198,7 +234,6 @@ router.get("/get-appointments-by-user-id", authMiddleware, async (req, res) => {
       error,
     });
   }
-}); 
+});
 
 module.exports = router;
- 
