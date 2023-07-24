@@ -120,21 +120,10 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
     const formatedDate = moment(req.body.date, "DD-MM-YYYY").format(
       "YYYY-MM-DD"
     );
-    console.log("fomattedDate", formatedDate);
     req.body.date = formatedDate;
     req.body.time = req.body.time;
-    console.log("body-date", typeof req.body.date);
-    // moment(req.body.time, "HH:mm").toISOString();
     const newAppointment = new AppointmentDetails(req.body);
     await newAppointment.save();
-    //pushing notification to doctor based on his userid
-    // const user = await User.findOne({ _id: req.body.doctorInfo.userId });
-    // user.unseenNotifications.push({
-    //   type: "new-appointment-request",
-    //   message: `A new appointment request has been made by ${req.body.userInfo.name}`,
-    //   onClickPath: "/doctor/appointments",
-    // });
-    // await user.save();
     const userName = req.body.userInfo?.name;
     const doctor = req.body?.doctorInfo;
     const doctorName = `${doctor?.firstName} ${doctor?.lastName}`;
