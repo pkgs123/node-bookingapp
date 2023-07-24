@@ -25,6 +25,10 @@ const doctorAppointmentSchema = new mongoose.Schema({
         type: String,
         required: true,
       },
+    bookingStatus:{
+      type: String,
+      required: true
+    }
 },
 {
   timestamps: true,

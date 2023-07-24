@@ -138,7 +138,7 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
     const userName = req.body.userInfo?.name;
     const doctor = req.body?.doctorInfo;
     const doctorName = `${doctor?.firstName} ${doctor?.lastName}`;
-    const date = req.body?.date;
+    const date = moment(req.body?.date).format("ddd, DD-MMM-yyyy");
     const time = req.body?.time;
 
     const formattedTime = (time / 2).toString().includes(".5")
@@ -158,7 +158,6 @@ router.post("/book-appointment", authMiddleware, async (req, res) => {
       recipientDisplayName,
       customMsg
     );
-    console.log("emailResponse", emailResponse);
       
     res.status(200).send({
       message: "Appointment booked successfully",
@@ -235,5 +234,26 @@ router.get("/get-appointments-by-user-id", authMiddleware, async (req, res) => {
     });
   }
 });
+
+router.post("/change-appointment-status-by-id",authMiddleware,async(req,res)=>{
+  try {
+    const { appointmentId, status } = req.body;
+    const appointmentStatus = await AppointmentDetails.findByIdAndUpdate(appointmentId, {
+      bookingStatus:status,
+    });
+    res.status(200).send({
+      message: "Appointment status updated successfully",
+      success: true,
+      data: appointmentStatus,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      message: "Error updating booking appointment",
+      success: false,
+      error,
+    });
+  }
+})
 
 module.exports = router;
